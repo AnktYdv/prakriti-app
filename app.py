@@ -1,8 +1,10 @@
-import streamlit as st
+!pip install xgboost
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 from xgboost import XGBClassifier
+import ipywidgets as widgets
+from IPython.display import display, clear_output
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -11,8 +13,8 @@ try:
     data_features = pd.read_csv('fold_all_c.csv')
     data_folds = pd.read_csv('fold_all_class.csv')
 except FileNotFoundError:
-    st.error("Error: Please ensure 'fold_all_c.csv' and 'fold_all_class.csv' are uploaded to the app directory.")
-    st.stop()
+    print("Error: Please upload 'fold_all_c.csv' and 'fold_all_class.csv' to Colab.")
+    raise
 
 # Preprocess data
 features = data_features.drop(columns=['SampleID', 'C'])
@@ -31,11 +33,11 @@ for column in features.columns:
 le_label = LabelEncoder()
 y_encoded = le_label.fit_transform(labels)
 
-# Train final model
+# Train model
 model = XGBClassifier(objective='multi:softprob', eval_metric='mlogloss', random_state=42)
 model.fit(features, y_encoded)
 
-# Define questionnaire with 132 features
+# Define questionnaire (same as Streamlit)
 questionnaire = [
     {'question': 'What is your gender?', 'feature': 'GENDER', 'options': ['Male', 'Female']},
     {'question': 'What is your body frame?', 'feature': 'F1', 'options': ['Narrow', 'Medium', 'Wide']},
@@ -62,121 +64,152 @@ questionnaire = [
     {'question': 'Is your scalp hair prone to falling?', 'feature': 'F22', 'options': ['Yes', 'No']},
     {'question': 'Is your scalp hair prone to breaking?', 'feature': 'F23', 'options': ['Yes', 'No']},
     {'question': 'Is your scalp hair prone to split ends?', 'feature': 'F24', 'options': ['Yes', 'No']},
-    {'question': 'Is your scalp hair prone to both graying and falling?', 'feature': 'F25', 'options': ['Yes', 'No']},
-    {'question': 'Is your scalp hair prone to none of the above?', 'feature': 'F26', 'options': ['Yes', 'No']},
-    {'question': 'What is your hair nature?', 'feature': 'F27', 'options': ['Dry', 'Oily', 'Normal', 'Seasonal']},
-    {'question': 'Do you have brittle nails?', 'feature': 'F28', 'options': ['Yes', 'No']},
-    {'question': 'Do you have cracked palms?', 'feature': 'F29', 'options': ['Yes', 'No']},
-    {'question': 'Do you have cracked soles?', 'feature': 'F30', 'options': ['Yes', 'No']},
-    {'question': 'Do you have cracked lips?', 'feature': 'F31', 'options': ['Yes', 'No']},
-    {'question': 'How is your appetite (regularity)?', 'feature': 'F32', 'options': ['Regular', 'Irregular']},
-    {'question': 'How is your appetite (frequency)?', 'feature': 'F33', 'options': ['Frequent', 'Infrequent']},
-    {'question': 'Do you like sweet taste?', 'feature': 'F34', 'options': ['Yes', 'No']},
-    {'question': 'Do you like sour taste?', 'feature': 'F35', 'options': ['Yes', 'No']},
-    {'question': 'Do you like salty taste?', 'feature': 'F36', 'options': ['Yes', 'No']},
-    {'question': 'Do you like bitter taste?', 'feature': 'F37', 'options': ['Yes', 'No']},
-    {'question': 'Do you like pungent taste?', 'feature': 'F38', 'options': ['Yes', 'No']},
-    {'question': 'Do you like astringent taste?', 'feature': 'F39', 'options': ['Yes', 'No']},
-    {'question': 'What type of food/beverages do you prefer?', 'feature': 'F40', 'options': ['Cold', 'Warm', 'Any', 'None']},
-    {'question': 'How much food can you consume when hungry?', 'feature': 'F41', 'options': ['Low', 'Medium', 'High', 'Variable']},
-    {'question': 'Are you able to digest the food consumed?', 'feature': 'F42', 'options': ['Always yes', 'If excess is taken causes indigestion otherwise yes', 'Always with difficulty', 'Cannot say']},
-    {'question': 'Do you prefer butter?', 'feature': 'F43', 'options': ['Yes', 'No']},
-    {'question': 'Do you prefer ghee?', 'feature': 'F44', 'options': ['Yes', 'No']},
-    {'question': 'Do you prefer cheese?', 'feature': 'F45', 'options': ['Yes', 'No']},
-    {'question': 'Do you prefer animal fat?', 'feature': 'F46', 'options': ['Yes', 'No']},
-    {'question': 'Do you prefer oil or oily articles?', 'feature': 'F47', 'options': ['Yes', 'No']},
-    {'question': 'Do you prefer none of the above fats?', 'feature': 'F48', 'options': ['Yes', 'No']},
-    {'question': 'Does your body temperature generally remain?', 'feature': 'F49', 'options': ['Higher compared to others', 'Lower compared to others', 'Average', 'Variable']},
-    {'question': 'How about your perspiration?', 'feature': 'F50', 'options': ['Profuse', 'Moderate', 'Less', 'Variable']},
-    {'question': 'How about your sleep (amount)?', 'feature': 'F51', 'options': ['Less sleep (<6 hrs)', 'Moderate sleep (6-8hrs)', 'Heavy sleep (>8hrs)', 'Variable']},
-    {'question': 'Do you get sleep immediately after going to bed?', 'feature': 'F52', 'options': ['Yes', 'After few minutes / doing reading etc.', 'No it takes long time to fall asleep']},
-    {'question': 'What is the quality of your sleep?', 'feature': 'F53', 'options': ['Deep', 'Moderate/Sound', 'Shallow']},
-    {'question': 'How about your bowel habits?', 'feature': 'F54', 'options': ['Regular', 'Irregular', 'Occasionally Irregular']},
-    {'question': 'Do you tend to have constipation?', 'feature': 'F55', 'options': ['Yes', 'No']},
-    {'question': 'Do you tend to have loose motions?', 'feature': 'F56', 'options': ['Yes', 'No']},
-    {'question': 'Do you tend to have normal bowels?', 'feature': 'F57', 'options': ['Yes', 'No']},
-    {'question': 'What is your stool consistency?', 'feature': 'F58', 'options': ['Hard', 'Loose', 'Soft', 'Semisolid', 'Medium']},
-    {'question': 'How about changes in your body weight?', 'feature': 'F59', 'options': ['Gain weight easily and loose easily', 'Difficulty in gaining weight', 'Gain weight easily but loose with difficulty', 'Stable']},
-    {'question': 'Do you have body odor?', 'feature': 'F60', 'options': ['Strong', 'Mild', 'Very Mild']},
-    {'question': 'Do you prefer cold weather?', 'feature': 'F61', 'options': ['Yes', 'No']},
-    {'question': 'Do you prefer warm weather?', 'feature': 'F62', 'options': ['Yes', 'No']},
-    {'question': 'Do you prefer both cold and warm weather?', 'feature': 'F63', 'options': ['Yes', 'No']},
-    {'question': 'Do you prefer seasonal transition weather?', 'feature': 'F64', 'options': ['Yes', 'No']},
-    {'question': 'Do you prefer all weather?', 'feature': 'F65', 'options': ['Yes', 'No']},
-    {'question': 'Do you prefer none of the weather?', 'feature': 'F66', 'options': ['Yes', 'No']},
-    {'question': 'Do you have health problems in cold weather?', 'feature': 'F67', 'options': ['Yes', 'No']},
-    {'question': 'Do you have health problems in warm weather?', 'feature': 'F68', 'options': ['Yes', 'No']},
-    {'question': 'Do you have health problems in both cold and warm weather?', 'feature': 'F69', 'options': ['Yes', 'No']},
-    {'question': 'Do you have health problems in seasonal transition?', 'feature': 'F70', 'options': ['Yes', 'No']},
-    {'question': 'Do you have health problems in all weather?', 'feature': 'F71', 'options': ['Yes', 'No']},
-    {'question': 'Do you have no weather-related health problems?', 'feature': 'F72', 'options': ['Yes', 'No']},
-    {'question': 'How frequently do you fall ill?', 'feature': 'F73', 'options': ['Frequently', 'Rarely', 'Moderately']},
-    {'question': 'If you fall ill, do you get cured easily?', 'feature': 'F74', 'options': ['Yes, mostly on its own', 'No, it takes long time & effort to get cured', 'Moderate efforts needed like diet, rest & medicine']},
-    {'question': 'What is the amount of your speaking?', 'feature': 'F75', 'options': ['Excessive', 'Less', 'Moderate']},
-    {'question': 'Is your voice low?', 'feature': 'F76', 'options': ['Yes', 'No']},
-    {'question': 'Is your voice feeble?', 'feature': 'F77', 'options': ['Yes', 'No']},
-    {'question': 'Is your voice weak?', 'feature': 'F78', 'options': ['Yes', 'No']},
-    {'question': 'Is your voice broken?', 'feature': 'F79', 'options': ['Yes', 'No']},
-    {'question': 'Is your voice rough?', 'feature': 'F80', 'options': ['Yes', 'No']},
-    {'question': 'Is your voice deep?', 'feature': 'F81', 'options': ['Yes', 'No']},
-    {'question': 'What is the speed/style of your speaking?', 'feature': 'F82', 'options': ['Slow', 'Quick', 'Medium', 'Variably']},
-    {'question': 'What is the level of your hand movement?', 'feature': 'F83', 'options': ['High/Excessive', 'Less', 'Moderate']},
-    {'question': 'What is the level of your leg movement?', 'feature': 'F84', 'options': ['High/Excessive', 'Less', 'Moderate']},
-    {'question': 'What is the level of your eyebrow movement?', 'feature': 'F85', 'options': ['High/Excessive', 'Less', 'Moderate']},
-    {'question': 'What is the level of your shoulder movement?', 'feature': 'F86', 'options': ['High/Excessive', 'Less', 'Moderate']},
-    {'question': 'What is the level of your overall movement?', 'feature': 'F87', 'options': ['High/Excessive', 'Less', 'Moderate']},
-    {'question': 'What is your mental strength?', 'feature': 'F88', 'options': ['Get stressed / disturbed frequently and can be counselled by others', 'Get stressed / disturbed easily and overcome it by own / with some time', 'Get stressed with difficulty and can overcome on own', 'Get stressed easily and cannot be counseled easily by others']},
-    {'question': 'How frequently do you feel tired?', 'feature': 'F89', 'options': ['On During routine work', 'After doing extra work/ heavy work', 'Not even after heavy work']},
-    {'question': 'How quickly can you memorize things?', 'feature': 'F90', 'options': ['Moderately', 'Quickly', 'Slowly', 'Variably']},
-    {'question': 'How forgetful are you?', 'feature': 'F91', 'options': ['Quickly', 'Moderately', 'Slowly', 'Variably']},
-    {'question': 'How is your memory retention power?', 'feature': 'F92', 'options': ['Good', 'Medium', 'Poor', 'Variable']},
-    {'question': 'Are you a...', 'feature': 'F93', 'options': ['Regular and routine observer', 'Spontaneous and moderate routine observer', 'Loving to experiment with routines and change them very readily']},
-    {'question': 'Do you like to...', 'feature': 'F94', 'options': ['Move around and interact with people and explore', 'Be seated and keep confined to own work', 'Move around moderately and not sit for very long hours']},
+    {'question': 'Is your scalp hair prone to none of the above?', 'feature': 'F25', 'options': ['Yes', 'No']},
+    {'question': 'What is your hair nature?', 'feature': 'F26', 'options': ['Dry', 'Oily', 'Normal', 'Seasonal']},
+    {'question': 'Do you have brittle nails?', 'feature': 'F27', 'options': ['Yes', 'No']},
+    {'question': 'Do you have cracked palms?', 'feature': 'F28', 'options': ['Yes', 'No']},
+    {'question': 'Do you have cracked soles?', 'feature': 'F29', 'options': ['Yes', 'No']},
+    {'question': 'Do you have cracked lips?', 'feature': 'F30', 'options': ['Yes', 'No']},
+    {'question': 'How is your appetite (regularity)?', 'feature': 'F31', 'options': ['Regular', 'Irregular']},
+    {'question': 'How is your appetite (frequency)?', 'feature': 'F32', 'options': ['Frequent', 'Infrequent']},
+    {'question': 'Do you like sweet taste?', 'feature': 'F33', 'options': ['Yes', 'No']},
+    {'question': 'Do you like sour taste?', 'feature': 'F34', 'options': ['Yes', 'No']},
+    {'question': 'Do you like salty taste?', 'feature': 'F35', 'options': ['Yes', 'No']},
+    {'question': 'Do you like bitter taste?', 'feature': 'F36', 'options': ['Yes', 'No']},
+    {'question': 'Do you like pungent taste?', 'feature': 'F37', 'options': ['Yes', 'No']},
+    {'question': 'Do you like astringent taste?', 'feature': 'F38', 'options': ['Yes', 'No']},
+    {'question': 'What type of food/beverages do you prefer?', 'feature': 'F39', 'options': ['Cold', 'Warm', 'Any', 'None']},
+    {'question': 'How much food can you consume when hungry?', 'feature': 'F40', 'options': ['Low', 'Medium', 'High', 'Variable']},
+    {'question': 'Are you able to digest the food consumed?', 'feature': 'F41', 'options': ['Always yes', 'If excess is taken causes indigestion otherwise yes', 'Always with difficulty', 'Cannot say']},
+    {'question': 'Do you prefer butter?', 'feature': 'F42', 'options': ['Yes', 'No']},
+    {'question': 'Do you prefer ghee?', 'feature': 'F43', 'options': ['Yes', 'No']},
+    {'question': 'Do you prefer cheese?', 'feature': 'F44', 'options': ['Yes', 'No']},
+    {'question': 'Do you prefer animal fat?', 'feature': 'F45', 'options': ['Yes', 'No']},
+    {'question': 'Do you prefer oil or oily articles?', 'feature': 'F46', 'options': ['Yes', 'No']},
+    {'question': 'Do you prefer none of the above fats?', 'feature': 'F47', 'options': ['Yes', 'No']},
+    {'question': 'Does your body temperature generally remain?', 'feature': 'F48', 'options': ['Higher compared to others', 'Lower compared to others', 'Average', 'Variable']},
+    {'question': 'How about your perspiration?', 'feature': 'F49', 'options': ['Profuse', 'Moderate', 'Less', 'Variable']},
+    {'question': 'How about your sleep (amount)?', 'feature': 'F50', 'options': ['Less sleep (<6 hrs)', 'Moderate sleep (6-8hrs)', 'Heavy sleep (>8hrs)', 'Variable']},
+    {'question': 'Do you get sleep immediately after going to bed?', 'feature': 'F51', 'options': ['Yes', 'After few minutes / doing reading etc.', 'No it takes long time to fall asleep']},
+    {'question': 'What is the quality of your sleep?', 'feature': 'F52', 'options': ['Deep', 'Moderate/Sound', 'Shallow']},
+    {'question': 'How about your bowel habits?', 'feature': 'F53', 'options': ['Regular', 'Irregular', 'Occasionally Irregular']},
+    {'question': 'Do you tend to have constipation?', 'feature': 'F54', 'options': ['Yes', 'No']},
+    {'question': 'Do you tend to have loose motions?', 'feature': 'F55', 'options': ['Yes', 'No']},
+    {'question': 'Do you tend to have normal bowels?', 'feature': 'F56', 'options': ['Yes', 'No']},
+    {'question': 'What is your stool consistency?', 'feature': 'F57', 'options': ['Hard', 'Loose', 'Soft', 'Semisolid', 'Medium']},
+    {'question': 'How about changes in your body weight?', 'feature': 'F58', 'options': ['Gain weight easily and loose easily', 'Difficulty in gaining weight', 'Gain weight easily but loose with difficulty', 'Stable']},
+    {'question': 'Do you have body odor?', 'feature': 'F59', 'options': ['Strong', 'Mild', 'Very Mild']},
+    {'question': 'Do you prefer cold weather?', 'feature': 'F60', 'options': ['Yes', 'No']},
+    {'question': 'Do you prefer warm weather?', 'feature': 'F61', 'options': ['Yes', 'No']},
+    {'question': 'Do you prefer both cold and warm weather?', 'feature': 'F62', 'options': ['Yes', 'No']},
+    {'question': 'Do you prefer seasonal transition weather?', 'feature': 'F63', 'options': ['Yes', 'No']},
+    {'question': 'Do you prefer all weather?', 'feature': 'F64', 'options': ['Yes', 'No']},
+    {'question': 'Do you prefer none of the weather?', 'feature': 'F65', 'options': ['Yes', 'No']},
+    {'question': 'Do you have health problems in cold weather?', 'feature': 'F66', 'options': ['Yes', 'No']},
+    {'question': 'Do you have health problems in warm weather?', 'feature': 'F67', 'options': ['Yes', 'No']},
+    {'question': 'Do you have health problems in both cold and warm weather?', 'feature': 'F68', 'options': ['Yes', 'No']},
+    {'question': 'Do you have health problems in seasonal transition?', 'feature': 'F69', 'options': ['Yes', 'No']},
+    {'question': 'Do you have health problems in all weather?', 'feature': 'F70', 'options': ['Yes', 'No']},
+    {'question': 'Do you have no weather-related health problems?', 'feature': 'F71', 'options': ['Yes', 'No']},
+    {'question': 'How frequently do you fall ill?', 'feature': 'F72', 'options': ['Frequently', 'Rarely', 'Moderately']},
+    {'question': 'If you fall ill, do you get cured easily?', 'feature': 'F73', 'options': ['Yes, mostly on its own', 'No, it takes long time & effort to get cured', 'Moderate efforts needed like diet, rest & medicine']},
+    {'question': 'What is the amount of your speaking?', 'feature': 'F74', 'options': ['Excessive', 'Less', 'Moderate']},
+    {'question': 'Is your voice deep?', 'feature': 'F75', 'options': ['Yes', 'No']},
+    {'question': 'Is your voice good toned?', 'feature': 'F76', 'options': ['Yes', 'No']},
+    {'question': 'Is your voice sharp?', 'feature': 'F77', 'options': ['Yes', 'No']},
+    {'question': 'Is your voice clear?', 'feature': 'F78', 'options': ['Yes', 'No']},
+    {'question': 'Is your voice high pitched?', 'feature': 'F79', 'options': ['Yes', 'No']},
+    {'question': 'Is your voice soft/pleasing?', 'feature': 'F80', 'options': ['Yes', 'No']},
+    {'question': 'What is the speed/style of your speaking?', 'feature': 'F81', 'options': ['Slow', 'Quick', 'Medium', 'Variably']},
+    {'question': 'What is the level of your hand movement?', 'feature': 'F82', 'options': ['High/Excessive', 'Less', 'Moderate']},
+    {'question': 'What is the level of your leg movement?', 'feature': 'F83', 'options': ['High/Excessive', 'Less', 'Moderate']},
+    {'question': 'What is the level of your eyebrow movement?', 'feature': 'F84', 'options': ['High/Excessive', 'Less', 'Moderate']},
+    {'question': 'What is the level of your shoulder movement?', 'feature': 'F85', 'options': ['High/Excessive', 'Less', 'Moderate']},
+    {'question': 'What is the level of your overall movement?', 'feature': 'F86', 'options': ['High/Excessive', 'Less', 'Moderate']},
+    {'question': 'What is your mental strength?', 'feature': 'F87', 'options': ['Get stressed / disturbed frequently and can be counselled by others', 'Get stressed / disturbed easily and overcome it by own / with some time', 'Get stressed with difficulty and can overcome on own', 'Get stressed easily and cannot be counseled easily by others']},
+    {'question': 'How frequently do you feel tired?', 'feature': 'F88', 'options': ['On During routine work', 'After doing extra work/ heavy work', 'Not even after heavy work']},
+    {'question': 'How quickly can you memorize things?', 'feature': 'F89', 'options': ['Moderately', 'Quickly', 'Slowly', 'Variably']},
+    {'question': 'How forgetful are you?', 'feature': 'F90', 'options': ['Quickly', 'Moderately', 'Slowly', 'Variably']},
+    {'question': 'How is your memory retention power?', 'feature': 'F91', 'options': ['Good', 'Medium', 'Poor', 'Variable']},
+    {'question': 'Are you a...', 'feature': 'F92', 'options': ['Regular and routine observer', 'Spontaneous and moderate routine observer', 'Loving to experiment with routines and change them very readily']},
+    {'question': 'Do you like to move around and interact?', 'feature': 'F93', 'options': ['Yes', 'No']},
+    {'question': 'Do you like to be seated and confined to work?', 'feature': 'F94', 'options': ['Yes', 'No']},
+    {'question': 'Do you like to move around moderately?', 'feature': 'F95', 'options': ['Yes', 'No']},
 ]
 
-# Streamlit app
-st.title("Prakriti Assessment Tool")
-st.write("Answer the questions below to find your Vata, Pitta, and Kapha percentages. Select an option for each question and click 'Submit'.")
+# Handle remaining features
+remaining_features = [f'F{i}' for i in range(96, 133)]
+for feature in remaining_features:
+    questionnaire.append({
+        'question': f'Placeholder for {feature} (automatically filled)',
+        'feature': feature,
+        'options': ['Mode'],
+        'hidden': True
+    })
 
-# Collect responses
+# Create dropdown widgets
 responses = {}
+dropdowns = []
 for q in questionnaire:
-    responses[q['feature']] = st.selectbox(q['question'], q['options'], key=q['feature'])
+    if 'hidden' not in q or not q['hidden']:
+        dropdown = widgets.Dropdown(options=q['options'], description=q['question'], layout={'width': 'max-content'})
+        dropdowns.append(dropdown)
+        responses[q['feature']] = dropdown
 
-# Submit button
-if st.button("Submit"):
-    # Create DataFrame
-    new_df = pd.DataFrame([responses])
-    
-    # Encode responses
-    for column in new_df.columns:
-        if column in label_encoders:
-            try:
-                new_df[column] = new_df[column].apply(lambda x: label_encoders[column].transform([str(x)])[0] if x in label_encoders[column].classes_ else label_encoders[column].classes_[0])
-            except Exception as e:
-                st.error(f"Error encoding column {column}: {str(e)}")
-                st.stop()
-        else:
-            new_df[column] = pd.to_numeric(new_df[column], errors='coerce').fillna(0)
+# Button to submit
+submit_button = widgets.Button(description="Submit")
+output = widgets.Output()
 
-    # Ensure all features are present
-    for feature in features.columns:
-        if feature not in new_df.columns:
-            mode_value = data_features[feature].mode()[0]
-            if feature in label_encoders:
+def on_submit_clicked(b):
+    with output:
+        clear_output()
+        # Collect responses
+        user_responses = {k: v.value for k, v in responses.items()}
+        
+        # Fill hidden features
+        for q in questionnaire:
+            if 'hidden' in q and q['hidden']:
+                mode_value = data_features[q['feature']].mode()[0]
+                user_responses[q['feature']] = str(mode_value)
+        
+        # Create DataFrame
+        new_df = pd.DataFrame([user_responses])
+        
+        # Encode responses
+        for column in new_df.columns:
+            if column in label_encoders:
                 try:
-                    new_df[feature] = label_encoders[feature].transform([str(mode_value)])[0]
-                except:
-                    new_df[feature] = label_encoders[feature].classes_[0]
+                    new_df[column] = new_df[column].apply(
+                        lambda x: label_encoders[column].transform([str(x)])[0]
+                        if str(x) in label_encoders[column].classes_
+                        else label_encoders[column].transform([label_encoders[column].classes_[0]])[0]
+                    )
+                except Exception as e:
+                    print(f"Error encoding column {column}: {e}")
+                    print(f"Column {column} values: {new_df[column].values}")
+                    return
             else:
-                new_df[feature] = mode_value
-
-    # Verify numeric types
-    if not new_df.select_dtypes(include=[np.number]).columns.tolist() == new_df.columns.tolist():
-        st.error("Error: Some features are not numeric. Please check your inputs.")
-        st.stop()
-
-    try:
+                new_df[column] = pd.to_numeric(new_df[column], errors='coerce').fillna(0)
+        
+        # Ensure all features
+        for feature in features.columns:
+            if feature not in new_df.columns:
+                mode_value = data_features[feature].mode()[0]
+                if feature in label_encoders:
+                    try:
+                        new_df[feature] = label_encoders[feature].transform([str(mode_value)])[0]
+                    except:
+                        new_df[feature] = label_encoders[feature].transform([label_encoders[feature].classes_[0]])[0]
+                else:
+                    new_df[feature] = mode_value
+        
+        # Verify numeric types
+        non_numeric_cols = new_df.select_dtypes(exclude=[np.number]).columns.tolist()
+        if non_numeric_cols:
+            print(f"Error: Non-numeric columns detected: {non_numeric_cols}")
+            print(new_df.dtypes)
+            return
+        
         # Predict
         probs = model.predict_proba(new_df)[0]
         prediction = {
@@ -186,9 +219,14 @@ if st.button("Submit"):
         }
         
         # Display results
-        st.subheader("Your Prakriti Assessment Results")
-        st.write(f"**Vata**: {prediction['Vata']:.2f}%")
-        st.write(f"**Pitta**: {prediction['Pitta']:.2f}%")
-        st.write(f"**Kapha**: {prediction['Kapha']:.2f}%")
-    except Exception as e:
-        st.error(f"Prediction failed: {str(e)}")
+        print("=== Your Prakriti Assessment Results ===")
+        print(f"Vata: {prediction['Vata']:.2f}%")
+        print(f"Pitta: {prediction['Pitta']:.2f}%")
+        print(f"Kapha: {prediction['Kapha']:.2f}%")
+
+submit_button.on_click(on_submit_clicked)
+
+# Display widgets
+for dropdown in dropdowns:
+    display(dropdown)
+display(submit_button, output)
